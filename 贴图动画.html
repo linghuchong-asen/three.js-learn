@@ -1,0 +1,158 @@
+<!--
+ * @Description: 
+ * @Version: 2.0
+ * @Author: yangsen
+ * @Date: 2022-07-05 10:34:52
+ * @LastEditors: yangsen
+ * @LastEditTime: 2022-07-05 14:41:22
+-->
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  </div>
+  <!-- Div which will hold the Output -->
+  <div id="webgl">
+  </div>
+
+  <!-- 来自 learning three.js -->
+  <script src="https://unpkg.com/three@0.111.0/build/three.js"></script>
+  <script src="https://unpkg.com/stats.js"></script>
+  <script src="https://cdn.bootcss.com/dat-gui/0.6.5/dat.gui.min.js"></script>
+
+
+  <script>
+    /**
+     * @@description: 声明 TextAnimator 对象，实现纹理的位移
+     * @param texture 传入的纹理
+     * @param tilesHoriz
+     * @param tilesVert
+     * @param numTiles
+     * @param tileDispDuration
+     */
+    function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) {
+      // 纹理对象通过引用传入，之后可以直接使用update方法更新纹理位置
+      this.tilesHorizontal = tilesHoriz; // 水平方向位置
+      this.tilesVertical = tilesVert; // 垂直方向
+      // 序列图中的帧数
+      this.numberOfTiles = numTiles;
+
+      /* .wrapS : number
+      这个值定义了纹理贴图在水平方向上将如何包裹，在UV映射中对应于U。
+      默认值是THREE.ClampToEdgeWrapping，即纹理边缘将被推到外部边缘的纹素。 其它的两个选项分别是THREE.RepeatWrapping和THREE.MirroredRepeatWrapping。 请参阅texture constants来了解详细信息。
+
+      .wrapT : number
+      这个值定义了纹理贴图在垂直方向上将如何包裹，在UV映射中对应于V。
+      可以使用与 .wrapS : number相同的选项。 */
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+
+      texture.repeat.set(1 / this.tilesHorizontal, 1 / this.tilesVertical);
+
+      // 每一帧停留时长
+      this.tileDisplayDuration = tileDispDuration;
+
+      // 当前帧停留时长
+      this.currentDisplayTime = 0;
+
+      // 当前帧
+      this.currentTile = 0;
+
+      // 更新函数，通过这个函数对纹理位移进行更新
+      this.update = (milliSec) => {
+
+        debugger
+        //  参数milliSec动画间隔时间是秒；每一帧停留时间单位毫秒
+        this.currentDisplayTime += milliSec;
+
+        /* 这里用时间判断可能就是想实现用指定的每帧时长进行动画，requestAnimationFrame速度太快且不可控 */
+        while (this.currentDisplayTime > this.tileDisplayDuration) {
+          debugger
+          this.currentDisplayTime -= this.tileDisplayDuration;
+          this.currentTile++;
+          // 播放完13帧从头开始播放
+          if (this.currentTile === this.numberOfTiles) { this.currentTile = 0; }
+          /* 当前帧占总帧数的比例就是X,Y方向移动的距离，offset的取值[0,1],应该是和纹理贴图的范围是[0,1]有关 */
+          const currentColumn = this.currentTile % this.tilesHorizontal;
+          texture.offset.x = currentColumn / this.tilesHorizontal;
+          const currentRow = Math.floor(this.currentTile / this.tilesHorizontal);
+          texture.offset.y = currentRow / this.tilesVertical;
+        }
+      };
+    }
+
+    function init() {
+      // 创建一个场景
+      var scene = new THREE.Scene();
+
+      // 创建一个摄像机，它定义了我们的观察位置
+      var camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.x = 300;
+      camera.position.y = 200;
+      camera.position.z = -500;
+
+      // 创建一个渲染器并设置其大小
+      var renderer = new THREE.WebGLRenderer();
+
+      renderer.setClearColor(0xffffff);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      /* 以http网址引用的图片资源能直接在浏览器中打开，不需要启动server服务 */
+      const arrowSrc = 'https://p1.music.126.net/NBwpm3-g3isuPkL98Eqqug==/109951164532405066.png';
+
+      const mixers = [];
+      const clock = new THREE.Clock();
+
+      const arrowTexture = new THREE.TextureLoader().load(arrowSrc);
+      /* 传入一个一行里有 13 帧的序列图，每张序列图停留 75ms */
+      const arrowAni = new TextureAnimator(arrowTexture, 13, 1, 13, 75);
+      const material = new THREE.SpriteMaterial({ map: arrowTexture, color: 0xffffff });
+      const arrow = new THREE.Sprite(material);
+      arrow.scale.set(33, 15, 1);
+      scene.add(arrow);
+
+      // 将渲染器的输入（canvas）插入到特定 DOM 元素下
+      document.getElementById("webgl").appendChild(renderer.domElement);
+
+
+      // 确保摄像机第一时刻是看向场景中心（0,0,0）
+      camera.lookAt(scene.position);
+      render();
+
+      function render() {
+        /* .getDelta () : Float
+      获取自 .oldTime 设置后到当前的秒数。 同时将 .oldTime 设置为当前时间。
+      如果 .autoStart 设置为 true 且时钟并未运行，则该方法同时启动时钟。 */
+        const delta = clock.getDelta(); // 获取的时间单位：秒
+        const oldTime = clock.oldTime;
+        debugger
+        mixers.forEach((mixer) => mixer.update(delta));
+        arrowAni.update(delta * 1000); // 秒变成毫秒所以×1000
+        // render using requestAnimationFrame
+        requestAnimationFrame(render);
+        renderer.render(scene, camera);
+      }
+    }
+    window.onload = init
+
+  </script>
+</body>
+
+</html>

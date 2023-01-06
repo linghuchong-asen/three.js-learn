@@ -1,0 +1,105 @@
+<!--
+ * @Description: 
+ * @Version: 2.0
+ * @Author: yangsen
+ * @Date: 2022-07-05 10:34:52
+ * @LastEditors: yangsen
+ * @LastEditTime: 2022-08-16 20:26:09
+-->
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  </div>
+  <!-- Div which will hold the Output -->
+  <div id="webgl">
+  </div>
+
+
+  <script type="module">
+    import * as THREE from '../three/build/three.module.js'
+    import {OrbitControls} from '../three/examples/jsm/controls/OrbitControls.js'
+    
+    // 创建一个场景
+    const scene = new THREE.Scene();
+
+    // 创建一个摄像机，它定义了我们的观察位置
+    const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.x = 30;
+    camera.position.y = 20;
+    camera.position.z = 50;
+    scene.add(camera)
+
+    // 添加光源
+    const light = new THREE.PointLight()
+    light.position.set(10,10,10)
+    scene.add(light)
+
+    // 添加辅助坐标
+    const axes = new THREE.AxesHelper(200)
+    scene.add(axes)
+
+    // 添加点  点不同其他物体，其他物体都有预定义的geometry(如BoxGeometry),所以不用单独指定顶点信息(对应webgl的vertexShader),three.js内部会自动生成顶点(如立方体只需给出长，宽，高就可以)；但点用的BufferGeometry不会自动生成顶点，要向BufferGeometry传入顶点信息
+
+    // 方式一：geometry.setAttribute()
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0], 3 ) );
+    const material = new THREE.PointsMaterial( { color: 0x888888 } );
+    material.size = 10; //点放大10倍
+    const points = new THREE.Points( geometry, material );
+    // points.scale.set(10,10,10) //没有效果
+    console.log(points);
+    scene.add( points );
+
+    /* //方式二geometry.setFromPoints([p1])
+    let p1 = new THREE.Vector3(0, 0, 0);
+    let p2 = new THREE.Vector3(10, 0, 0);
+    let p3 = new THREE.Vector3(0, 0, 10);
+    let p4 = new THREE.Vector3(10, 0, 10);
+    let geometry = new THREE.BufferGeometry();
+	  // 顶点添加到Geometry的顶点数组vertices中
+	  geometry.setFromPoints([p1]);
+	  // 必须使用对应点的材质，size为点的大小
+	  let  material = new THREE.PointsMaterial( {color: 'red', size:2} );
+
+    let  mesh = new THREE.Points( geometry, material );
+    mesh.position.set(1,1,1) // 也是支持利用position设置位置的，但是这是位置，设置顶点的那个设置的图形，不是一个概念
+    scene.add( mesh ); */
+
+
+    // 创建一个渲染器并设置其大小
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setClearColor(0xffffff);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.render(scene,camera)
+    // 将渲染器的输入（canvas）插入到特定 DOM 元素下
+    document.getElementById("webgl").appendChild(renderer.domElement);  
+
+    // 控制器
+    const control = new OrbitControls(camera,renderer.domElement)
+    control.addEventListener('change', () => {
+      // controls.target = webgis;
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+
+</html>

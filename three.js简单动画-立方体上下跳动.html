@@ -1,0 +1,157 @@
+<!--
+ * @Description: 一个立方体上下跳动的动画;创建动画的基本步骤：
+  1.创建动画混合器，const mixer = new THREE.AnimationMixer(cubeMeshWire);
+  2.创建可重用的动画片段，new THREE.AnimationClip('stonePosClip', duration, [posTrack]);
+  3.利用AnimationMixer，AnimationClip得到AnimationAction，action上有控制动画的一系列方法，const action = mixer.clipAction(getClip());
+  4.利用Clock获得时间间隔，const delta = clock.getDelta();利用mixer.update(delta)推进混合器动画并更新时间
+ * @Version: 2.0
+ * @Author: yangsen
+ * @Date: 2022-07-04 20:31:50
+ * @LastEditors: yangsen
+ * @LastEditTime: 2022-07-05 10:16:10
+-->
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    * {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden;
+}
+  </style>
+</head>
+
+<body>
+</div>
+<!-- Div which will hold the Output -->
+<div id="webgl">
+  <!-- 来自 learning three.js -->
+<script src="https://unpkg.com/three@0.111.0/build/three.js"></script>
+<script src="https://unpkg.com/stats.js"></script>
+<script src="https://cdn.bootcss.com/dat-gui/0.6.5/dat.gui.min.js"></script>
+<script>
+function init() {
+        // 创建一个场景
+        var scene = new THREE.Scene();
+
+        // 创建一个摄像机，它定义了我们的观察位置
+        var camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.x = 300;
+        camera.position.y = 200;
+        camera.position.z = 100;
+
+        // 创建一个渲染器并设置其大小
+        var renderer = new THREE.WebGLRenderer();
+
+        renderer.setClearColor(0xffffff);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+  
+        var cubeGeometry = new THREE.CubeGeometry(30,30,30);
+  
+        const mixers = [];
+        const clock = new THREE.Clock();
+        /* .wireframe : Boolean
+          将几何体渲染为线框。默认值为false（即渲染为平面多边形）。 */ 
+        var cubeWireMaterial = new THREE.MeshBasicMaterial({ wireframe: true, color: 0x666666 });
+        var cubeMeshWire = new THREE.Mesh(cubeGeometry, cubeWireMaterial);
+        cubeMeshWire.position.set(0, 0, 0);
+        scene.add(cubeMeshWire);
+  
+        // 上下移动动画
+        const mixer = new THREE.AnimationMixer(cubeMeshWire);
+        /* .clipAction (clip : AnimationClip, optionalRoot : Object3D) : AnimationAction
+          返回所传入的剪辑参数的AnimationAction, 根对象参数可选，默认值为混合器的默认根对象。第一个参数可以是动画剪辑(AnimationClip)对象或者动画剪辑的名称。
+
+          如果不存在符合传入的剪辑和根对象这两个参数的动作, 该方法将会创建一个。传入相同的参数多次调用将会返回同一个剪辑实例。 */
+          
+        /* 创建动画行为片段： */
+        function getClip() {
+          const times = [0, 0.1]; // 关键帧时间数组，离散的时间点序列；这个也是时间和下面的duration的区别：比如times设置[0,0.1]duration设置1那么就是在0.1秒是跳到10的位置，然后剩下的0.9秒的时间就停止在那不用，达到整个动画的周期1秒又会跳下来
+          const values = [0, 0, 0, 0, 10, 0]; // 与时间点对应的值组成的数组
+
+          // 创建位置关键帧对象：0时刻对应位置0, 0, 0   1时刻对应位置0, 10, 0
+          /* VectorKeyframeTrack
+          向量类型的关键帧轨道   为什么传入[0, 0, 0, 0, 10, 0]这样一个数组就能实现上下跳动呢？因为VectorKeyframeTrack是向量类型关键帧轨道，会把数组解析成向量
+
+          构造函数
+          VectorKeyframeTrack( name : String, times : Array, values : Array )
+          name - (必须) 关键帧轨道(KeyframeTrack)的标识符.
+          times - (必须) 关键帧的时间数组.
+          values - 与时间数组中的时间点对应的值数组.
+          interpolation - 使用的插值类型。 取值参考 Animation Constants 默认值为 InterpolateLinear. */
+          const posTrack = new THREE.VectorKeyframeTrack('stone.position', times, values);
+          const duration = 1;
+          return new THREE.AnimationClip('stonePosClip', duration, [posTrack]);
+        }
+        
+        const action = mixer.clipAction(getClip());
+        /* 应该是通过AnimationMixer的clipAction方法就能用上AnimationClip返回AnimationAction； */
+        
+        /* AnimationAction
+          AnimationActions 用来调度存储在AnimationClips中的动画。
+
+          说明: AnimationAction的大多数方法都可以链式调用 */
+        /* .timeScale : Number
+          时间(time)的比例因子. 值为0时会使动画暂停。值为负数时动画会反向执行。默认值是1。 */
+        action.timeScale = 1;
+        /* .loop : Number
+        循环模式 (可以通过setLoop改变)。默认值是 THREE.LoopRepeat (重复无穷次)
+
+        必须是以下值之一：
+
+        THREE.LoopOnce - 只执行一次
+        THREE.LoopRepeat - 重复次数为repetitions的值, 且每次循环结束时候将回到起始动作开始下一次循环。
+        THREE.LoopPingPong - 重复次数为repetitions的值, 且像乒乓球一样在起始点与结束点之间来回循环。 */
+        action.loop = THREE.LoopPingPong;
+        action.play();
+        mixers.push(mixer);
+  
+  
+        // 创建一个平行光并设置其位置
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+        directionalLight.position.set(-20, 40, 60);
+        scene.add(directionalLight);
+
+        // 增加一个环境光，提亮整个场景
+        var ambientLight = new THREE.AmbientLight(0x292929);
+        scene.add(ambientLight);
+
+        // 将渲染器的输入（canvas）插入到特定 DOM 元素下
+        document.getElementById("webgl").appendChild(renderer.domElement);
+
+ 
+        // 确保摄像机第一时刻是看向场景中心（0,0,0）
+        camera.lookAt(scene.position);
+        render();
+  
+        
+
+        function render() {
+          /* .getDelta () : Float
+          获取自 .oldTime 设置后到当前的秒数。 同时将 .oldTime 设置为当前时间。
+          如果 .autoStart 设置为 true 且时钟并未运行，则该方法同时启动时钟。 */
+            const delta = clock.getDelta();
+            /* .update (deltaTimeInSeconds : Number) : this
+            推进混合器时间并更新动画 */
+            mixers.forEach((mixer) => mixer.update(delta))
+            // render using requestAnimationFrame
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+    }
+    window.onload = init
+
+</script>
+
+</div>
+</body>
+</html>
