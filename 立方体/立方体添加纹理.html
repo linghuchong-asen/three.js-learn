@@ -1,96 +1,94 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style></style>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  <title>Document</title>
-  <style></style>
-</head>
+  <body>
+    <div id="webgl-output"></div>
+    <script type="module">
+      import * as THREE from "../three/build/three.module.js";
+      import { OrbitControls } from "../three/examples/jsm/controls/OrbitControls.js";
 
-<body>
-  <div id="webgl-output"></div>
-  <script type="module">
-    import * as THREE from "../three/build/three.module.js";
-    import { OrbitControls } from "../three/examples/jsm/controls/OrbitControls.js";
+      let scene, renderer, camera;
 
-    let scene, renderer, camera;
+      // 添加立方体函数
+      const cubeFun = () => {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
 
-    // 添加立方体函数
-    const cubeFun = () => {
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const texturePath = "./sea.jpg";
+        const texture = new THREE.TextureLoader().load(texturePath);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        // uv两个方向纹理重复数量
+        texture.repeat.set(1, 1);
+        material.map = texture;
+        material.side = THREE.DoubleSide;
 
-      const texturePath = "./sea.jpg";
-      const texture = new THREE.TextureLoader().load(texturePath);
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      // uv两个方向纹理重复数量
-      texture.repeat.set(1, 1);
-      material.map = texture;
-      material.side = THREE.DoubleSide;
+        const cube = new THREE.Mesh(geometry, material);
+        return cube;
+      };
 
-      const cube = new THREE.Mesh(geometry, material);
-      return cube;
-    };
+      const init = () => {
+        // 场景
+        scene = new THREE.Scene();
+        // 渲染器
+        renderer = new THREE.WebGLRenderer();
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(new THREE.Color(0xd5ebe1), 1);
+        // 相机
+        camera = new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth / window.innerHeight,
+          1,
+          10000
+        );
+        camera.position.set(70, 70, 70);
+        // 灯光
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(100, 100, 100);
+        scene.add(light);
+        const pointLight = new THREE.PointLight();
+        pointLight.position.set(10, 10, 10);
+        scene.add(pointLight);
+        const pointLight2 = new THREE.PointLight();
+        pointLight2.position.set(-20, 20, 20);
+        scene.add(pointLight2);
+        const pointLight3 = new THREE.PointLight();
+        pointLight3.position.set(-100, -50, 20);
+        scene.add(pointLight3);
+        const pointLight4 = new THREE.PointLight();
+        pointLight4.position.set(-100, 0, 20);
+        scene.add(pointLight4);
+        const pointLight5 = new THREE.PointLight();
+        pointLight5.position.set(10, -50, 20);
+        scene.add(pointLight5);
+        // AxesHelper辅助对象
+        const axes = new THREE.AxesHelper(10);
+        scene.add(axes);
 
-    const init = () => {
-      // 场景
-      scene = new THREE.Scene();
-      // 渲染器
-      renderer = new THREE.WebGLRenderer();
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setClearColor(new THREE.Color(0xd5ebe1), 1);
-      // 相机
-      camera = new THREE.PerspectiveCamera(
-        45,
-        window.innerWidth / window.innerHeight,
-        1,
-        10000
-      );
-      camera.position.set(70, 70, 70);
-      // 灯光
-      const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(100, 100, 100);
-      scene.add(light);
-      const pointLight = new THREE.PointLight();
-      pointLight.position.set(10, 10, 10);
-      scene.add(pointLight);
-      const pointLight2 = new THREE.PointLight();
-      pointLight2.position.set(-20, 20, 20);
-      scene.add(pointLight2);
-      const pointLight3 = new THREE.PointLight();
-      pointLight3.position.set(-100, -50, 20);
-      scene.add(pointLight3);
-      const pointLight4 = new THREE.PointLight();
-      pointLight4.position.set(-100, 0, 20);
-      scene.add(pointLight4);
-      const pointLight5 = new THREE.PointLight();
-      pointLight5.position.set(10, -50, 20);
-      scene.add(pointLight5);
-      // AxesHelper辅助对象
-      const axes = new THREE.AxesHelper(10);
-      scene.add(axes);
+        // 添加立方体
+        scene.add(cubeFun());
+        renderer.render(scene, camera);
 
-      // 添加立方体
-      scene.add(cubeFun());
-      renderer.render(scene, camera);
+        // 渲染到页面
+        document
+          .getElementById("webgl-output")
+          .appendChild(renderer.domElement);
+      };
+      init();
 
-      // 渲染到页面
-      document
-        .getElementById("webgl-output")
-        .appendChild(renderer.domElement);
-    };
-    init();
-
-    // 辅助控制器
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.addEventListener("change", () => {
-      renderer.render(scene, camera);
-    });
-  </script>
-</body>
-
+      // 辅助控制器
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.addEventListener("change", () => {
+        renderer.render(scene, camera);
+      });
+    </script>
+  </body>
 </html>

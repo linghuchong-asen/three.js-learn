@@ -3,7 +3,7 @@
  * @Author: yangsen
  * @Date: 2023-01-06 20:32:49
  * @LastEditors: yangsen
- * @LastEditTime: 2023-01-06 20:59:16
+ * @LastEditTime: 2023-01-13 11:40:42
  */
 import * as THREE from "./three.js/build/three.module.js";
 import { OrbitControls } from "./three.js/examples/jsm/controls/OrbitControls.js";
@@ -39,7 +39,7 @@ function init() {
   loader.load(
     "2mcube.glb",
     function (gltf) {
-      // 设置模型缩放比例
+      gltf.name = "model";
       scene.add(gltf.scene);
       render();
 
@@ -61,6 +61,7 @@ function init() {
 }
 
 function render() {
+  requestAnimationFrame(render);
   renderer.render(scene, camera);
 }
 
@@ -89,4 +90,5 @@ const raycast = (event) => {
     containerZ.innerHTML = position.z;
   }
 };
+
 document.addEventListener("click", raycast);
