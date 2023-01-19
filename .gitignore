@@ -1,7 +1,7 @@
 *node_modules/
 debug.log
-housePlayground.glb
-housePlayground.gltf
-untitledoffset.glb
-untitled.glb
-Model.obj
+*.glb
+*.gltf
+*.glb
+*.glb
+*.obj
