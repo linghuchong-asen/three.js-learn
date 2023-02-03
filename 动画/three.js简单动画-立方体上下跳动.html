@@ -8,7 +8,7 @@
  * @Author: yangsen
  * @Date: 2022-07-04 20:31:50
  * @LastEditors: yangsen
- * @LastEditTime: 2022-07-05 10:16:10
+ * @LastEditTime: 2023-02-01 18:37:44
 -->
 <!DOCTYPE html>
 <html lang="zh-cn">
@@ -20,26 +20,26 @@
   <title>Document</title>
   <style>
     * {
-  margin: 0;
-  padding: 0;
-}
+      margin: 0;
+      padding: 0;
+    }
 
-body {
-  overflow: hidden;
-}
+    body {
+      overflow: hidden;
+    }
   </style>
 </head>
 
 <body>
-</div>
-<!-- Div which will hold the Output -->
-<div id="webgl">
-  <!-- 来自 learning three.js -->
-<script src="https://unpkg.com/three@0.111.0/build/three.js"></script>
-<script src="https://unpkg.com/stats.js"></script>
-<script src="https://cdn.bootcss.com/dat-gui/0.6.5/dat.gui.min.js"></script>
-<script>
-function init() {
+  </div>
+  <!-- Div which will hold the Output -->
+  <div id="webgl">
+    <!-- 来自 learning three.js -->
+    <script src="https://unpkg.com/three@0.111.0/build/three.js"></script>
+    <script src="https://unpkg.com/stats.js"></script>
+    <script src="https://cdn.bootcss.com/dat-gui/0.6.5/dat.gui.min.js"></script>
+    <script>
+      function init() {
         // 创建一个场景
         var scene = new THREE.Scene();
 
@@ -54,25 +54,25 @@ function init() {
 
         renderer.setClearColor(0xffffff);
         renderer.setSize(window.innerWidth, window.innerHeight);
-  
-        var cubeGeometry = new THREE.CubeGeometry(30,30,30);
-  
+
+        var cubeGeometry = new THREE.CubeGeometry(30, 30, 30);
+
         const mixers = [];
         const clock = new THREE.Clock();
         /* .wireframe : Boolean
-          将几何体渲染为线框。默认值为false（即渲染为平面多边形）。 */ 
+          将几何体渲染为线框。默认值为false（即渲染为平面多边形）。 */
         var cubeWireMaterial = new THREE.MeshBasicMaterial({ wireframe: true, color: 0x666666 });
         var cubeMeshWire = new THREE.Mesh(cubeGeometry, cubeWireMaterial);
         cubeMeshWire.position.set(0, 0, 0);
         scene.add(cubeMeshWire);
-  
+
         // 上下移动动画
         const mixer = new THREE.AnimationMixer(cubeMeshWire);
         /* .clipAction (clip : AnimationClip, optionalRoot : Object3D) : AnimationAction
           返回所传入的剪辑参数的AnimationAction, 根对象参数可选，默认值为混合器的默认根对象。第一个参数可以是动画剪辑(AnimationClip)对象或者动画剪辑的名称。
 
           如果不存在符合传入的剪辑和根对象这两个参数的动作, 该方法将会创建一个。传入相同的参数多次调用将会返回同一个剪辑实例。 */
-          
+
         /* 创建动画行为片段： */
         function getClip() {
           const times = [0, 0.1]; // 关键帧时间数组，离散的时间点序列；这个也是时间和下面的duration的区别：比如times设置[0,0.1]duration设置1那么就是在0.1秒是跳到10的位置，然后剩下的0.9秒的时间就停止在那不用，达到整个动画的周期1秒又会跳下来
@@ -92,10 +92,10 @@ function init() {
           const duration = 1;
           return new THREE.AnimationClip('stonePosClip', duration, [posTrack]);
         }
-        
+
         const action = mixer.clipAction(getClip());
         /* 应该是通过AnimationMixer的clipAction方法就能用上AnimationClip返回AnimationAction； */
-        
+
         /* AnimationAction
           AnimationActions 用来调度存储在AnimationClips中的动画。
 
@@ -114,8 +114,8 @@ function init() {
         action.loop = THREE.LoopPingPong;
         action.play();
         mixers.push(mixer);
-  
-  
+
+
         // 创建一个平行光并设置其位置
         var directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
         directionalLight.position.set(-20, 40, 60);
@@ -128,30 +128,31 @@ function init() {
         // 将渲染器的输入（canvas）插入到特定 DOM 元素下
         document.getElementById("webgl").appendChild(renderer.domElement);
 
- 
+
         // 确保摄像机第一时刻是看向场景中心（0,0,0）
         camera.lookAt(scene.position);
         render();
-  
-        
+
+
 
         function render() {
           /* .getDelta () : Float
           获取自 .oldTime 设置后到当前的秒数。 同时将 .oldTime 设置为当前时间。
           如果 .autoStart 设置为 true 且时钟并未运行，则该方法同时启动时钟。 */
-            const delta = clock.getDelta();
-            /* .update (deltaTimeInSeconds : Number) : this
-            推进混合器时间并更新动画 */
-            mixers.forEach((mixer) => mixer.update(delta))
-            // render using requestAnimationFrame
-            requestAnimationFrame(render);
-            renderer.render(scene, camera);
+          const delta = clock.getDelta();
+          /* .update (deltaTimeInSeconds : Number) : this
+          推进混合器时间并更新动画 */
+          mixers.forEach((mixer) => mixer.update(delta))
+          // render using requestAnimationFrame
+          requestAnimationFrame(render);
+          renderer.render(scene, camera);
         }
-    }
-    window.onload = init
+      }
+      window.onload = init
 
-</script>
+    </script>
 
-</div>
+  </div>
 </body>
+
 </html>

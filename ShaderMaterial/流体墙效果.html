@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>多边形学习</title>
+</head>
+
+<body>
+  <canvas id="c2d" class="c2d" width="1000" height="500"></canvas>
+  <script type="module">
+    import * as THREE from "../three/build/three.module.js";
+    import { OrbitControls } from "../three/examples/jsm/controls/OrbitControls.js";
+
+    let scene;
+    /**
+  * 创建流体墙体材质
+  * option =>
+  * params bgUrl flowUrl
+  * **/
+    const createFlowWallMat = (bgUrl, flowUrl) => {
+      // 顶点着色器
+      const vertexShader =/* glsl */ `
+            varying vec2 vUv;
+            varying vec3 fNormal;
+            void main(){
+                    vUv = uv;
+                    vec4 mvPosition =projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                    gl_Position =  mvPosition;
+            }
+        `;
+      // 片元着色器
+      const fragmentShader = /* glsl */`
+            uniform float time;
+            varying vec2 vUv;
+            uniform sampler2D flowTexture;
+            void main( void ) {
+                vec4 color = texture2D( flowTexture, vec2( fract(vUv.y - time ) , vUv.x));
+                gl_FragColor =  color;
+            }
+        `;
+
+      const flowTexture = new THREE.TextureLoader().load(
+        flowUrl ||
+        // "https://model.3dmomoda.com/models/da5e99c0be934db7a42208d5d466fd33/0/gltf/F3E2E977BDB335778301D9A1FA4A4415.png"
+        // "https://model.3dmomoda.com/models/47007127aaf1489fb54fa816a15551cd/0/gltf/116802027AC38C3EFC940622BC1632BA.jpg"
+        "./img/red.png"
+      );
+
+      // 允许平铺
+      // flowTexture.wrapS = THREE.RepeatWrapping;
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          time: {
+            value: 0,
+          },
+          flowTexture: {
+            value: flowTexture,
+          },
+        },
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        side: THREE.DoubleSide,
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+      });
+    };
+
+    const wallMaterial = createFlowWallMat();
+    /* 底面和顶面的材质 */
+    const bottomMaterial = new THREE.MeshBasicMaterial({ visible: false })
+    const topMaterial = new THREE.MeshBasicMaterial({ visible: false })
+
+    const init = () => {
+      const canvas = document.querySelector("#c2d");
+      // 渲染器
+      const renderer = new THREE.WebGLRenderer({ canvas });
+
+      const fov = 40; // 视野范围
+      const aspect = 2; // 相机默认值 画布的宽高比
+      const near = 0.1; // 近平面
+      const far = 10000; // 远平面
+      // 透视投影相机
+      const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+      camera.position.set(0, 10, 10);
+      camera.lookAt(0, 0, 0);
+      /*  camera.up.x = 0;
+       camera.up.y = 0;
+       camera.up.z = 1; */
+      // 控制相机
+      const controls = new OrbitControls(camera, canvas);
+      controls.update();
+
+      // 场景
+      scene = new THREE.Scene();
+
+      // 坐标轴
+      const axes = new THREE.AxesHelper(10);
+      scene.add(axes);
+
+      const clock = new THREE.Clock();
+      let toggle = 0;
+      // 渲染
+      function render() {
+
+        const delta = clock.getDelta();
+
+        toggle += delta;
+
+        /* if (toggle > 0.06) {
+          wallMaterial.uniforms.time.value += 0.009;
+          toggle = 0;
+        } */
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(render);
+      }
+      render()
+    };
+    init();
+
+    // 创建心形 路径
+    const heartShape = new THREE.Shape();
+    heartShape.moveTo(0, 1.5);
+    heartShape.lineTo(2, -0.5);
+    heartShape.lineTo(0, -2.5);
+    heartShape.lineTo(-2, -0.5);
+    heartShape.lineTo(0, 1.5);
+
+    /* 心形拉伸 */
+    const lightUp = new THREE.DirectionalLight(0xffffff, 1);
+    lightUp.position.set(-1, 10, 4);
+    scene.add(lightUp);
+    const lightDown = new THREE.DirectionalLight(0xffffff, 1);
+    lightDown.position.set(-1, -10, -4);
+    scene.add(lightDown);
+    const extrudeSettings = {
+      steps: 2,
+      depth: 5,
+      bevelEnabled: false
+    };
+    const geometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+
+    // 创建物体
+    /* NOTE: material可以传一个数组，第一个参数代表上下面，第二个参数代表周围面，传入第三个参数就不能识别了--2023.02.03 */
+
+    const texTure = new THREE.TextureLoader().load("./img/red.png");
+    // 旋转纹理
+    texTure.rotation = Math.PI / 2
+    texTure.offset = new THREE.Vector2(0, 2)
+    const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, map: texTure, side: THREE.DoubleSide })
+    const mesh = new THREE.Mesh(geometry, [bottomMaterial, wallMaterial]);
+    scene.add(mesh);
+
+    // 边框线
+    const edgeGeometry = new THREE.EdgesGeometry(geometry);
+    const edgeMaterial = new THREE.LineBasicMaterial({
+      color: 0x018b5f,
+      linewidth: 10,
+    });
+    const edge = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+    scene.add(edge);
+
+
+  </script>
+</body>
+
+</html>

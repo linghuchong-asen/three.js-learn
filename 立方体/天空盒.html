@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>three.js webgl - materials - cube reflection / refraction [Walt]</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+</head>
+
+<body>
+
+
+
+  <script type="module">
+
+    import * as THREE from '../three/build/three.module.js';
+
+
+
+    import { OrbitControls } from '../three/examples/jsm/controls/OrbitControls.js';
+
+
+    let container;
+
+    let camera, scene, renderer;
+
+
+
+    init();
+
+
+
+    function init() {
+
+      container = document.createElement('div');
+      document.body.appendChild(container);
+
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
+      camera.position.z = 2000;
+
+      //cubemap
+      const reflectionCube = new THREE.CubeTextureLoader().load([
+        /*  NOTE 使用的图片长宽必须相等，且同一数组内图片要使用相同的大小
+        比如：512x512像素 1024x1024像素，不能混着用。sea.jpg因为不是长宽等高的图片，所以加载不出来天空盒的效果，一片黑 */
+        './roomBox/px.jpg', // 前
+        './roomBox/nx.jpg', // 后
+        './roomBox/py.jpg', // 左
+        './roomBox/ny.jpg', // 右
+        './roomBox/pz.jpg', // 上
+        './roomBox/nz.jpg', // 下
+      ]);
+
+      scene = new THREE.Scene();
+      scene.background = reflectionCube;
+
+      //renderer
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+
+      //controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.addEventListener('change', () => {
+        renderer.render(scene, camera);
+      });
+
+    }
+  </script>
+
+</body>
+
+</html>

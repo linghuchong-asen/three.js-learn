@@ -54,21 +54,6 @@
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(100, 100, 100);
         scene.add(light);
-        const pointLight = new THREE.PointLight();
-        pointLight.position.set(10, 10, 10);
-        scene.add(pointLight);
-        const pointLight2 = new THREE.PointLight();
-        pointLight2.position.set(-20, 20, 20);
-        scene.add(pointLight2);
-        const pointLight3 = new THREE.PointLight();
-        pointLight3.position.set(-100, -50, 20);
-        scene.add(pointLight3);
-        const pointLight4 = new THREE.PointLight();
-        pointLight4.position.set(-100, 0, 20);
-        scene.add(pointLight4);
-        const pointLight5 = new THREE.PointLight();
-        pointLight5.position.set(10, -50, 20);
-        scene.add(pointLight5);
         // AxesHelper辅助对象
         const axes = new THREE.AxesHelper(10);
         scene.add(axes);

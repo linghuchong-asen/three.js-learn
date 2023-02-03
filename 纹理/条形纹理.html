@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>条形纹理</title>
+</head>
+
+<body>
+  <canvas id="c2d" class="c2d" width="1000" height="500"></canvas>
+  <script type="module">
+    import * as THREE from "../three/build/three.module.js";
+    import { OrbitControls } from "../three/examples/jsm/controls/OrbitControls.js";
+
+    let scene;
+
+    const init = () => {
+      const canvas = document.querySelector("#c2d");
+      // 渲染器
+      const renderer = new THREE.WebGLRenderer({ canvas });
+
+      const fov = 40; // 视野范围
+      const aspect = 2; // 相机默认值 画布的宽高比
+      const near = 0.1; // 近平面
+      const far = 10000; // 远平面
+      // 透视投影相机
+      const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+      camera.position.set(0, 10, 10);
+      camera.lookAt(0, 0, 0);
+      /*  camera.up.x = 0;
+       camera.up.y = 0;
+       camera.up.z = 1; */
+      // 控制相机
+      const controls = new OrbitControls(camera, canvas);
+      controls.update();
+
+      // 场景
+      scene = new THREE.Scene();
+
+      // 坐标轴
+      const axes = new THREE.AxesHelper(50);
+      scene.add(axes);
+
+      const clock = new THREE.Clock();
+      let toggle = 0;
+      // 渲染
+      function render() {
+
+        const delta = clock.getDelta();
+
+        toggle += delta;
+
+        /* if (toggle > 0.06) {
+          wallMaterial.uniforms.time.value += 0.009;
+          toggle = 0;
+        } */
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(render);
+      }
+      render()
+    };
+    init();
+
+    const boxGeometry = new THREE.BoxGeometry(30, 30, 30)
+    const texTure = new THREE.TextureLoader().load("./img/red.png");
+    // 旋转纹理
+    texTure.rotation = Math.PI / 2
+    texTure.offset = new THREE.Vector2(0, 2)
+    const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, map: texTure, })
+    const box = new THREE.Mesh(boxGeometry, boxMaterial)
+
+
+    const boxGeometry2 = new THREE.BoxGeometry(30, 30, 30)
+    const boxMaterial2 = new THREE.MeshBasicMaterial({ color: 0xffffff, })
+    const box2 = new THREE.Mesh(boxGeometry2, boxMaterial2)
+    // box2.translateX(10)
+    scene.add(box2)
+    scene.add(box)
+  </script>
+</body>
+
+</html>

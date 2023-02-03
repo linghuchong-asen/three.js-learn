@@ -4,7 +4,7 @@
  * @Author: yangsen
  * @Date: 2022-07-05 10:34:52
  * @LastEditors: yangsen
- * @LastEditTime: 2022-07-05 14:41:22
+ * @LastEditTime: 2023-02-03 21:17:22
 -->
 <!DOCTYPE html>
 <html lang="zh-cn">
@@ -64,6 +64,7 @@
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
 
+      // repeat设置为大于0小于1的数值，纹理会被放大
       texture.repeat.set(1 / this.tilesHorizontal, 1 / this.tilesVertical);
 
       // 每一帧停留时长
@@ -78,13 +79,12 @@
       // 更新函数，通过这个函数对纹理位移进行更新
       this.update = (milliSec) => {
 
-        debugger
         //  参数milliSec动画间隔时间是秒；每一帧停留时间单位毫秒
         this.currentDisplayTime += milliSec;
 
         /* 这里用时间判断可能就是想实现用指定的每帧时长进行动画，requestAnimationFrame速度太快且不可控 */
         while (this.currentDisplayTime > this.tileDisplayDuration) {
-          debugger
+
           this.currentDisplayTime -= this.tileDisplayDuration;
           this.currentTile++;
           // 播放完13帧从头开始播放
@@ -142,7 +142,7 @@
       如果 .autoStart 设置为 true 且时钟并未运行，则该方法同时启动时钟。 */
         const delta = clock.getDelta(); // 获取的时间单位：秒
         const oldTime = clock.oldTime;
-        debugger
+
         mixers.forEach((mixer) => mixer.update(delta));
         arrowAni.update(delta * 1000); // 秒变成毫秒所以×1000
         // render using requestAnimationFrame
