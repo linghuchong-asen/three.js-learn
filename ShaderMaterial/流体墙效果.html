@@ -35,7 +35,7 @@
             varying vec2 vUv;
             uniform sampler2D flowTexture;
             void main( void ) {
-                vec4 color = texture2D( flowTexture, vec2( fract(vUv.y - time ) , vUv.x));
+                vec4 color = texture2D( flowTexture, vec2(  vUv.x,fract(vUv.y - time ) ));
                 gl_FragColor =  color;
             }
         `;

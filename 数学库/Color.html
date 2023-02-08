@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Color</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+
+<body>
+  <script type="module">
+    import * as THREE from '../three/build/three.module.js';
+    import { OrbitControls } from '../three/examples/jsm/controls/OrbitControls.js';
+
+    let container;
+    let camera, scene, renderer;
+    init();
+
+    function init() {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
+      camera.position.set(50, 50, 50)
+      scene = new THREE.Scene();
+      const axes = new THREE.AxesHelper(10)
+      scene.add(axes)
+
+      //renderer
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xf1f2f6)
+      container.appendChild(renderer.domElement);
+      // 循环渲染
+      const render = () => {
+        renderer.render(scene, camera)
+        requestAnimationFrame(render)
+      }
+      render()
+
+      //controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.addEventListener('change', () => {
+        renderer.render(scene, camera);
+      });
+    }
+    const boxGeometry = new THREE.BoxGeometry(10, 10, 10);
+    const boxMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(87 / 255, 96 / 255, 111 / 255) });
+    const box = new THREE.Mesh(boxGeometry, boxMaterial)
+    scene.add(box)
+    /* 当使用rgb格式的参数，传入的是0-255的值返回的也是0-255的值，传入的是0-1的值返回的也是0-1的值，但是使用的时候要传入一个0-1的值，不然不能正常显示颜色 */
+    console.log(new THREE.Color(87 / 255, 96 / 255, 111 / 255)); // {r:0.435,g:0.3764,b:0.3411}
+    console.log(new THREE.Color(87, 96, 111));  // {r:87,g:96,b:111}
+  </script>
+
+</body>
+
+</html>

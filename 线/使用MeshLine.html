@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>MeshLine</title>
+  <style></style>
+</head>
+
+<body>
+  <script src="../three/build/three.min.js"></script>
+  <script src="../three/examples/js/controls/OrbitControls.js"></script>
+  <!-- 注意：必须在引入three.js之后引入MeshMaterial -->
+  <script src="./THREE.MeshLine/src/THREE.MeshLine.js"></script>
+  <script>
+    let container, camera, scene, renderer;
+    init();
+
+    const line = new MeshLine();
+    line.setPoints([-10, 0, 0, 0, 10, 0, 10, 0, 0])
+    /* NOTE：也是一种比较好的可以设置线宽和虚线的方式，但是有一个缺点就是线宽随着鼠标的放大而放大 */
+    const material = new MeshLineMaterial({
+      color: new THREE.Color(0x006666),// 线颜色
+      lineWidth: 0.1, // 线条的宽度
+      dashArray: 0.1, // 破折号之间的长度和间距。(0 -无破折号) 0: 表示实线了, 0.1:有10段, 0.5:表示有两段 1: 有一段 2:没有了
+      dashRatio: 0.5, // 定义可见和不可见之间的比率(0 -更可见，1 -更不可见) 当为1时, 已经看不虚线了
+      transparent: true, // 设置透明度,这个是必须要设置的，不然没有虚线效果
+      // opacity: 1 // 设置透明度
+      sizeAttenuation: 1,
+      resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      // useMap: 0,
+      wireframe: false
+    })
+    const mesh = new THREE.Mesh(line.geometry, material);
+    scene.add(mesh)
+
+    function init() {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
+      camera.position.set(50, 50, 50)
+      scene = new THREE.Scene();
+      const axes = new THREE.AxesHelper(10)
+      scene.add(axes)
+
+      //renderer
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xf1f2f6)
+      container.appendChild(renderer.domElement);
+      // 循环渲染
+      const render = () => {
+        renderer.render(scene, camera)
+        requestAnimationFrame(render)
+      }
+      render()
+
+      //controls
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.addEventListener('change', () => {
+        renderer.render(scene, camera);
+      });
+    }
+  </script>
+</body>
+
+</html>

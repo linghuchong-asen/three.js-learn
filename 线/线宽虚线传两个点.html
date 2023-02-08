@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Document</title>
+  <style></style>
+</head>
+
+<body>
+  <div id="webgl-output"></div>
+  <script type="module">
+    import * as THREE from "../three/build/three.module.js";
+    import { OrbitControls } from "../three/examples/jsm/controls/OrbitControls.js";
+    import { LineGeometry } from "../three/examples/jsm/lines/LineGeometry.js";
+    import { LineSegmentsGeometry } from "../three/examples/jsm/lines/LineSegmentsGeometry.js";
+    import { LineMaterial } from "../three/examples/jsm/lines/LineMaterial.js";
+    import { Line2 } from "../three/examples/jsm/lines/Line2.js";
+    import { LineSegments2 } from "../three/examples/jsm/lines/LineSegments2.js";
+
+    let scene, renderer, camera;
+    const points = [];
+    const positions = [];
+    // 生成线函数
+    const lineCreateFun = (start, end, dashLength, gapLength) => {
+      const material = new LineMaterial({
+        color: 0x0000ff,
+        // linewidth: 10,
+      });
+
+      material.resolution.set(window.innerWidth, window.innerHeight);
+
+      const c = Math.pow((Math.pow((end[0] - start[0]), 2) + Math.pow((end[1] - start[1]), 2) + Math.pow((end[2] - start[2]), 2)), 0.5);
+      const a = end[2] - start[2];
+      // 点的数量，包含起始终止点。
+      const pointerNum = Math.ceil(c / (dashLength + gapLength))
+      for (let i = 0; i < pointerNum; i++) {
+        if (i === 0) {
+          points.push(new THREE.Vector3(start[0], start[1], start[2]))
+        } else if (i < pointerNum - 1) {
+          if (i % 2 === 0) { } else {
+
+          }
+
+        } else {
+          points.push(new THREE.Vector3(end[0], end[1], end[2]))
+        }
+      }
+
+      //  从一系列的点创建一条平滑的三维样条曲线。
+      const spline = new THREE.CatmullRomCurve3(points);
+      const divisions = 3 * points.length;
+      const vector3 = new THREE.Vector3();
+
+      for (let i = 0; i < divisions; i++) {
+        const t = i / divisions;
+        spline.getPoint(t, vector3);
+        positions.push(vector3.x, vector3.y, vector3.z);
+      }
+      const geometry = new LineSegmentsGeometry();
+
+      geometry.setPositions(positions);
+
+      const line = new LineSegments2(geometry, material);
+      // line.computeLineDistances();
+      // 线--设置路径点
+
+      // 线--设置颜色
+
+      // 线--设置宽度
+
+      // 线--设置类型
+      // line.setType('dotted');
+      return line;
+    };
+
+    // 初始化函数
+    const init = () => {
+      // 场景
+      scene = new THREE.Scene();
+      // 渲染器
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(new THREE.Color(0x08c924), 1);
+      // 相机
+      camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        1,
+        10000
+      );
+      camera.position.set(70, 70, 70);
+      // 灯光
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(100, 100, 100);
+      scene.add(light);
+
+      // AxesHelper辅助对象
+      const axes = new THREE.AxesHelper(10);
+      scene.add(axes);
+
+      // 添加线
+      scene.add(lineCreateFun());
+      // 渲染到页面
+      document
+        .getElementById("webgl-output")
+        .appendChild(renderer.domElement);
+    };
+
+    init();
+
+    // 辅助控制器
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.addEventListener("change", () => {
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+
+</html>

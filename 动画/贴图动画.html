@@ -4,7 +4,7 @@
  * @Author: yangsen
  * @Date: 2022-07-05 10:34:52
  * @LastEditors: yangsen
- * @LastEditTime: 2023-02-03 21:17:22
+ * @LastEditTime: 2023-02-05 09:51:55
 -->
 <!DOCTYPE html>
 <html lang="zh-cn">
@@ -47,8 +47,9 @@
      * @param numTiles
      * @param tileDispDuration
      */
+    /*  纹理对象通过引用传入，之后可以直接使用update方法更新纹理位置 */
     function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) {
-      // 纹理对象通过引用传入，之后可以直接使用update方法更新纹理位置
+
       this.tilesHorizontal = tilesHoriz; // 水平方向位置
       this.tilesVertical = tilesVert; // 垂直方向
       // 序列图中的帧数
@@ -65,6 +66,7 @@
       texture.wrapT = THREE.RepeatWrapping;
 
       // repeat设置为大于0小于1的数值，纹理会被放大
+      /* 这里的为什么要放大呢？其实是和下面点精灵的长度设置有关，设置的X方向33，但是图片更长，那么图片就会别挤压成一条黑线了，所以要进行放大；为什么要放大的是tilesHorizontal？应该是慢慢调试出来的，和图片与点精灵的大小都该有关系。 */
       texture.repeat.set(1 / this.tilesHorizontal, 1 / this.tilesVertical);
 
       // 每一帧停留时长
@@ -89,10 +91,12 @@
           this.currentTile++;
           // 播放完13帧从头开始播放
           if (this.currentTile === this.numberOfTiles) { this.currentTile = 0; }
-          /* 当前帧占总帧数的比例就是X,Y方向移动的距离，offset的取值[0,1],应该是和纹理贴图的范围是[0,1]有关 */
-          const currentColumn = this.currentTile % this.tilesHorizontal;
+          /* 当前帧占总帧数的比例就是X,Y方向移动的距离；这个案例中的帧并不是指的某个API提供的功能，就是用了一下帧的概念，
+          动画的形成主要靠的位置的移动，比如这里制定13帧，就是得到每次offset的移动距离是1/13 2/13...12/13，得到一个这样一串循环的数字，
+          表示移动的距离 */
+          const currentColumn = this.currentTile % this.numberOfTiles;
           texture.offset.x = currentColumn / this.tilesHorizontal;
-          const currentRow = Math.floor(this.currentTile / this.tilesHorizontal);
+          const currentRow = Math.floor(this.currentTile / this.numberOfTiles);
           texture.offset.y = currentRow / this.tilesVertical;
         }
       };
@@ -111,13 +115,12 @@
       // 创建一个渲染器并设置其大小
       var renderer = new THREE.WebGLRenderer();
 
-      renderer.setClearColor(0xffffff);
+      renderer.setClearColor(0x663c50);
       renderer.setSize(window.innerWidth, window.innerHeight);
 
       /* 以http网址引用的图片资源能直接在浏览器中打开，不需要启动server服务 */
       const arrowSrc = 'https://p1.music.126.net/NBwpm3-g3isuPkL98Eqqug==/109951164532405066.png';
 
-      const mixers = [];
       const clock = new THREE.Clock();
 
       const arrowTexture = new THREE.TextureLoader().load(arrowSrc);
@@ -125,12 +128,12 @@
       const arrowAni = new TextureAnimator(arrowTexture, 13, 1, 13, 75);
       const material = new THREE.SpriteMaterial({ map: arrowTexture, color: 0xffffff });
       const arrow = new THREE.Sprite(material);
+      // 设置的是精灵的大小
       arrow.scale.set(33, 15, 1);
       scene.add(arrow);
 
       // 将渲染器的输入（canvas）插入到特定 DOM 元素下
       document.getElementById("webgl").appendChild(renderer.domElement);
-
 
       // 确保摄像机第一时刻是看向场景中心（0,0,0）
       camera.lookAt(scene.position);
@@ -143,7 +146,6 @@
         const delta = clock.getDelta(); // 获取的时间单位：秒
         const oldTime = clock.oldTime;
 
-        mixers.forEach((mixer) => mixer.update(delta));
         arrowAni.update(delta * 1000); // 秒变成毫秒所以×1000
         // render using requestAnimationFrame
         requestAnimationFrame(render);

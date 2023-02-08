@@ -1,0 +1,166 @@
+<!--
+ * @Description: 这种效果暂未实现2023.02.05
+ * @Author: yangsen
+ * @Date: 2023-02-05 07:31:36
+ * @LastEditors: yangsen
+ * @LastEditTime: 2023-02-05 22:10:58
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>多边形学习</title>
+</head>
+
+<body>
+  <canvas id="c2d" class="c2d" width="1000" height="500"></canvas>
+  <script type="module">
+    import * as THREE from "../three/build/three.module.js";
+    import { OrbitControls } from "../three/examples/jsm/controls/OrbitControls.js";
+
+    let scene, renderer, camera;
+
+    const init = () => {
+      const canvas = document.querySelector("#c2d");
+      // 渲染器
+      renderer = new THREE.WebGLRenderer({ canvas });
+
+      const fov = 40; // 视野范围
+      const aspect = 2; // 相机默认值 画布的宽高比
+      const near = 0.1; // 近平面
+      const far = 10000; // 远平面
+      // 透视投影相机
+      camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+      camera.position.set(0, 10, 10);
+      camera.lookAt(0, 0, 0);
+      camera.up.x = 0;
+      camera.up.y = 0;
+      camera.up.z = 1;
+      // 控制相机
+      const controls = new OrbitControls(camera, canvas);
+      controls.update();
+
+      // 场景
+      scene = new THREE.Scene();
+
+      // 坐标轴
+      const axes = new THREE.AxesHelper(10);
+      scene.add(axes);
+
+
+
+    };
+    init();
+
+    // 创建心形 路径
+    const heartShape = new THREE.Shape();
+    heartShape.moveTo(0, 1.5);
+    heartShape.lineTo(2, -0.5);
+    heartShape.lineTo(0, -2.5);
+    heartShape.lineTo(-2, -0.5);
+    heartShape.lineTo(0, 1.5);
+
+    /* 心形拉伸 */
+    const lightUp = new THREE.DirectionalLight(0xffffff, 1);
+    lightUp.position.set(-1, 10, 4);
+    scene.add(lightUp);
+    const lightDown = new THREE.DirectionalLight(0xffffff, 1);
+    lightDown.position.set(-1, -10, -4);
+    scene.add(lightDown);
+    const extrudeSettings = {
+      steps: 2,
+      depth: 5,
+      bevelEnabled: false
+    };
+    const geometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+
+    function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) {
+
+      this.tilesHorizontal = tilesHoriz; // 水平方向位置
+      this.tilesVertical = tilesVert; // 垂直方向
+      // 序列图中的帧数
+      this.numberOfTiles = numTiles;
+
+      /* .wrapS : number
+      这个值定义了纹理贴图在水平方向上将如何包裹，在UV映射中对应于U。
+      默认值是THREE.ClampToEdgeWrapping，即纹理边缘将被推到外部边缘的纹素。 其它的两个选项分别是THREE.RepeatWrapping和THREE.MirroredRepeatWrapping。 请参阅texture constants来了解详细信息。
+      
+      .wrapT : number
+      这个值定义了纹理贴图在垂直方向上将如何包裹，在UV映射中对应于V。
+      可以使用与 .wrapS : number相同的选项。 */
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+
+      // repeat设置为大于0小于1的数值，纹理会被放大
+      /* 这里的为什么要放大呢？其实是和下面点精灵的长度设置有关，设置的X方向33，但是图片更长，那么图片就会别挤压成一条黑线了，所以要进行放大；为什么要放大的是tilesHorizontal？应该是慢慢调试出来的，和图片与点精灵的大小都该有关系。 */
+      texture.repeat.set(1 / this.tilesHorizontal, 1 / this.tilesVertical);
+
+      // 每一帧停留时长
+      this.tileDisplayDuration = tileDispDuration;
+
+      // 当前帧停留时长
+      this.currentDisplayTime = 0;
+
+      // 当前帧
+      this.currentTile = 0;
+
+      // 更新函数，通过这个函数对纹理位移进行更新
+      this.update = (milliSec) => {
+        //  参数milliSec动画间隔时间是秒；每一帧停留时间单位毫秒
+        this.currentDisplayTime += milliSec;
+        /* 这里用时间判断可能就是想实现用指定的每帧时长进行动画，requestAnimationFrame速度太快且不可控 */
+        while (this.currentDisplayTime > this.tileDisplayDuration) {
+          console.log(123);
+          this.currentDisplayTime -= this.tileDisplayDuration;
+          this.currentTile++;
+          // 播放完13帧从头开始播放
+          if (this.currentTile === this.numberOfTiles) { this.currentTile = 0; }
+          /* 当前帧占总帧数的比例就是X,Y方向移动的距离；这个案例中的帧并不是指的某个API提供的功能，就是用了一下帧的概念，
+          动画的形成主要靠的位置的移动，比如这里制定13帧，就是得到每次offset的移动距离是1/13 2/13...12/13，得到一个这样一串循环的数字，
+          表示移动的距离 */
+          const currentColumn = this.currentTile % this.numberOfTiles;
+          texture.offset.x = currentColumn / this.tilesHorizontal;
+          const currentRow = Math.floor(this.currentTile / this.numberOfTiles);
+          texture.offset.y = currentRow / this.tilesVertical;
+        }
+      };
+    }
+
+    // 创建物体
+    /* NOTE: material可以传一个数组，第一个参数代表上下面，第二个参数代表周围面，传入第三个参数就不能识别了--2023.02.03 */
+    /* 两端材质 */
+    const bottomMaterial = new THREE.MeshBasicMaterial({ visible: false });
+    /* 四周材质 */
+    const texTure = new THREE.TextureLoader().load("./img/red.png");
+    // 旋转纹理
+    texTure.rotation = Math.PI / 2
+    const fluidWall = new TextureAnimator(texTure, 13, 1, 13, 300)
+    const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, map: texTure, side: THREE.DoubleSide })
+    const mesh = new THREE.Mesh(geometry, [bottomMaterial, boxMaterial]);
+    scene.add(mesh);
+
+    // 边框线
+    const edgeGeometry = new THREE.EdgesGeometry(geometry);
+    const edgeMaterial = new THREE.LineBasicMaterial({
+      color: 0x018b5f,
+      linewidth: 10,
+    });
+    const edge = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+    scene.add(edge);
+
+
+    // 渲染
+    const clock = new THREE.Clock();
+    function render() {
+      let toggle = 0;
+      const delta = clock.getDelta();
+      fluidWall.update(delta * 1000)
+      renderer.render(scene, camera);
+      requestAnimationFrame(render);
+    }
+    render()
+  </script>
+</body>
+
+</html>
