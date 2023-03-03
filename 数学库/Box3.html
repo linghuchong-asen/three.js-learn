@@ -15,9 +15,10 @@
     import * as THREE from "../three/build/three.module.js";
     import { OrbitControls } from "../three/examples/jsm/controls/OrbitControls.js";
 
-    const box = new THREE.Box3().setFromPoints([new THREE.Vector3(-2, -2, -2), new THREE.Vector3(2, 2, 2)]);
+    const box3 = new THREE.Box3()
+    box3.setFromPoints([new THREE.Vector3(-2, -2, -2), new THREE.Vector3(2, 2, 2)]);
 
-    console.log(box);
+    console.log(box3);
   </script>
 </body>
 

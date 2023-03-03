@@ -1,0 +1,199 @@
+<!--
+ * @Description: 重点是后期处理，创建图形不是这个文件的重点
+ * @Author: yangsen
+ * @Date: 2023-02-24 10:08:44
+ * @LastEditors: yangsen
+ * @LastEditTime: 2023-02-27 14:36:31
+-->
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>后期处理-高亮物体</title>
+  <style></style>
+</head>
+
+<body>
+  <button id="highLight">物体高亮</button>
+  <script type="module">
+    import * as THREE from '../three/build/three.module.js';
+    import { OrbitControls } from '../three/examples/jsm/controls/OrbitControls.js';
+    import { EffectComposer } from "../three/examples/jsm/postprocessing/EffectComposer.js"
+    import { ShaderPass } from '../three/examples/jsm/postprocessing/ShaderPass.js';
+    import { OutlinePass } from '../three/examples/jsm/postprocessing/OutlinePass.js';
+    import { RenderPass } from '../three/examples/jsm/postprocessing/RenderPass.js';
+
+    let container;
+    let camera, scene, renderer, composer, renderPass;
+
+    init();
+    function init() {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
+      camera.position.set(100, 100, 100);
+
+      scene = new THREE.Scene();
+
+      const light = new THREE.DirectionalLight(0xffffff, 5);
+      light.position.set(100, 100, 100);
+      scene.add(light);
+      const axes = new THREE.AxesHelper(10);
+      scene.add(axes);
+
+      //renderer
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor("#ced6e0")
+      container.appendChild(renderer.domElement);
+
+      //controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.addEventListener('change', () => {
+        render();
+      });
+      // 初始化效果组合器,后期处理
+      composer = new EffectComposer(renderer);
+      // NOTE:告诉composer适配画布大小，不然会出现图形模糊的情况
+      composer.setSize(window.innerWidth, window.innerHeight);
+      // 添加基本的渲染通道
+      renderPass = new RenderPass(scene, camera);
+      composer.addPass(renderPass)
+      const render = () => {
+        composer.render()
+        requestAnimationFrame(render)
+      }
+      render()
+    }
+
+    const boxGeometry = new THREE.BoxGeometry(10, 10, 10);
+    const material = new THREE.MeshBasicMaterial({ color: 0x0ce2c0 });
+    const box = new THREE.Mesh(boxGeometry, material);
+    box.position.set(-15, 0, 0)
+    scene.add(box)
+    /* 对于用点或sprite生成的物体，outlinePass没有效果，立方体有效果;sprite生成的物体高亮简单的实现可以在外面 */
+    const map = new THREE.TextureLoader().load("sprite.png");
+    const spriteMaterial = new THREE.SpriteMaterial({ color: "#ffffff", map: map });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.position.set(0, 20, 0);
+    sprite.scale.set(10, 10, 10);
+    console.log(sprite.position);
+    console.log(sprite);
+    scene.add(sprite);
+    const cylinderGeometry = new THREE.CylinderGeometry(6, 6, 10, 64);
+    const cylinderMaterial = new THREE.MeshBasicMaterial({ color: "#ff0004", transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+    const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial)
+    cylinder.position.set(sprite.position.x, sprite.position.y, sprite.position.z)
+    scene.add(cylinder)
+    // 创建心形 路径
+    const heartShape = new THREE.Shape();
+    heartShape.moveTo(0, 1.5);
+    heartShape.bezierCurveTo(2, 3.5, 4, 1.5, 2, -0.5);
+    heartShape.lineTo(0, -2.5);
+    heartShape.lineTo(-2, -0.5);
+    heartShape.bezierCurveTo(-4, 1.5, -2, 3.5, 0, 1.5);
+    const extrudeSettings = {
+      steps: 2,
+      depth: 3,
+    };
+    const geometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+    /**
+     * 创建透明墙体材质
+     * option =>
+     * params height color opacity speed
+     * **/
+    const createOpacityWallMat = (
+      option = {
+        height: 3,
+        color: "#00ffff",
+        opacity: 0.5,
+        speed: 1,
+      }
+    ) => {
+      // 顶点着色器
+      const vertexShader = /* glsl */ `
+         uniform vec3 u_color;
+
+         uniform float time;
+         uniform float u_height;
+         varying float v_opacity;
+
+         void main() {
+             vec3 vPosition = position;
+             v_opacity = mix(1.0, 0.0, position.z / u_height * 1.0) * (1.0 + sin(time) * 0.5);
+             gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1);
+         }
+      `;
+      // 片元着色器
+      const fragmentShader = /* glsl */ `
+         uniform vec3 u_color;
+         uniform float u_opacity;
+         varying float v_opacity;
+         void main() {
+             gl_FragColor = vec4(u_color, v_opacity * u_opacity);
+         }
+       `;
+
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          u_height: {
+            value: option.height,
+          },
+          u_opacity: {
+            value: option.opacity,
+          },
+          u_color: {
+            value: new THREE.Color(option.color),
+          },
+          time: {
+            value: 0,
+          },
+          speed: {
+            value: option.speed,
+          },
+        },
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        side: THREE.DoubleSide,
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+      });
+    };
+    const mesh = new THREE.Mesh(geometry, createOpacityWallMat());
+    mesh.position.set(0, 0, 15)
+
+    scene.add(mesh);
+
+    /* 后期处理 */
+    // OutlinePass通道可以为场景中被添加到通道中的物体边缘添加一个描边发光效果。
+    const outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
+    outlinePass.visibleEdgeColor.set("#b5005e") // 边缘可见部分发光颜色，默认 #FFFFFF。
+    outlinePass.hiddenEdgeColor.set("#b50003") // 边缘遮挡部分发光颜色，默认 #190A05。
+    outlinePass.edgeStrength = 5; // 边缘强度 ，默认 3.0
+    outlinePass.edgeThickness = 3; // 边缘厚度，默认 1.0
+    outlinePass.edgeGlow = 1; // 边缘流， 默认 0.0
+    outlinePass.pulsePeriod = 2; // 闪烁频率 ，默认 0，值越大频率越低。
+    composer.addPass(outlinePass);
+
+    const highLight = document.getElementById("highLight");
+    let highFlag = true;
+    highLight.addEventListener("click",() => {
+      /* NOTE:生成添加outlinePass不要写在事件函数中，不然就相当于添加了很多个outlinePass；composer是支持添加多个pass的 */
+      if(highFlag){
+        // 要高亮的物体
+        outlinePass.selectedObjects = [ mesh];
+        highFlag = false
+      }else{
+        outlinePass.selectedObjects = [box];
+        highFlag = true
+      }
+    })
+  </script>
+</body>
+
+</html>

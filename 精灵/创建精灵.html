@@ -21,11 +21,14 @@
     const spriteFun = () => {
       const map = new THREE.TextureLoader().load("sprite.png");
       console.log(map);
-      const material = new THREE.SpriteMaterial({ map: map });
+      // SpriteMaterial是支持旋转的
+      const material = new THREE.SpriteMaterial({ map: map,rotation:Math.PI/2 });
 
       const sprite = new THREE.Sprite(material);
       /* 参考立方体看的话，精灵的默认的宽高也是1 */
       sprite.position.set(0, 0, 1);
+      sprite.scale.set(10,10,10); // 精灵支持缩放，会拉伸贴图
+      // sprite.rotateX(Math.PI/2) // Sprite设置旋转没有效果，因为就是一个点。
       return sprite;
     };
 

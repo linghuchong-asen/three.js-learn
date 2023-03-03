@@ -1,0 +1,81 @@
+<!--
+ * @Description: 通过heading pitch roll，三个角度控制相机姿态
+ * @Author: yangsen
+ * @Date: 2023-02-20 16:03:59
+ * @LastEditors: yangsen
+ * @LastEditTime: 2023-02-28 17:24:25
+-->
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style></style>
+</head>
+
+<body>
+  <script type="module">
+    import * as THREE from '../three/build/three.module.js';
+    import { OrbitControls } from '../three/examples/jsm/controls/OrbitControls.js';
+    import * as glMatrix from "../lib/gl-matrix/dist/esm/index.js"
+
+    let container;
+    let camera, scene, renderer;
+
+    init();
+    function init() {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
+      camera.position.set(0, 0, 100);
+      // camera.lookAt(new THREE.Vector3(0,0,0))
+      /* NOTE:相机可以通过旋转设置，但是旋转设置的优先级低于lookAt方法，所以使用旋转的时候就不要设置lookAt，也不要用controls控制器，控制器会调用lookAt方法看向target */
+      const pitch = Math.PI / 10; // 俯仰角,绕x轴
+      const heading = 0; // 偏航角，绕y轴
+      const roll = 0; // 翻滚角，绕z轴
+      const euler = new THREE.Euler(pitch, heading, roll, "XYZ");
+      camera.rotation.copy(euler) // 这种方式可以传一个欧拉角
+      // camera.rotation.set(pitch,heading,roll) // set方法可以直接传弧度制角度
+      console.log(camera.rotation); // 获取相机当前旋转角度
+      scene = new THREE.Scene();
+      const light = new THREE.DirectionalLight(0xffffff, 5);
+      light.position.set(100, 100, 100);
+      scene.add(light);
+      const axes = new THREE.AxesHelper(100);
+      scene.add(axes);
+
+      //renderer
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor("#ced6e0")
+      container.appendChild(renderer.domElement);
+
+      // 使用相机旋转的情况下不能使用控制器，控制器会调用相机的lookAt方法
+      /* const controls = new OrbitControls(camera, renderer.domElement);
+      console.log(controls.target); // target默认位置原点(0,0,0)
+      controls.addEventListener('change', () => {
+        render();
+      }); */
+      const render = () => {
+        renderer.render(scene, camera);
+        requestAnimationFrame(render)
+      }
+      render()
+    }
+
+
+    const boxGeometry = new THREE.BoxGeometry(10, 10, 10);
+
+    const boxMaterial = new THREE.MeshBasicMaterial({ color: "#dd7694" });
+    console.log(boxMaterial);
+    const box = new THREE.Mesh(boxGeometry, boxMaterial);
+    scene.add(box);
+
+  </script>
+</body>
+
+</html>

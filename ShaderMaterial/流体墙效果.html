@@ -143,7 +143,7 @@
     const geometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
 
     // 创建物体
-    /* NOTE: material可以传一个数组，第一个参数代表上下面，第二个参数代表周围面，传入第三个参数就不能识别了--2023.02.03 */
+    /* NOTE: material可以传一个数组，第一个参数代表上下面，第二个参数代表周围面，传入第三个参数就不能识别了--2023.02.03,但是在CylinderGeometry中第一个参数是周围面 */
 
     const texTure = new THREE.TextureLoader().load("./img/red.png");
     // 旋转纹理

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style></style>
+</head>
+
+<body>
+  <script type="module">
+    import * as THREE from '../three/build/three.module.js';
+    import { OrbitControls } from '../three/examples/jsm/controls/OrbitControls.js';
+
+    let container;
+    let camera, scene, renderer;
+
+    init();
+    function init() {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
+      camera.position.set(100, 100, 100)
+
+      scene = new THREE.Scene();
+
+      const axes = new THREE.AxesHelper(10)
+      scene.add(axes)
+
+      //renderer
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+
+      //controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.addEventListener('change', () => {
+        render();
+      });
+      const render = () => {
+        renderer.render(scene, camera);
+        requestAnimationFrame(render)
+      }
+      render()
+    }
+
+    let texture = new THREE.TextureLoader().load("./assets/ball.png")
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping; //每个都重复
+  texture.repeat.set(1, 1)
+  texture.needsUpdate = true
+
+
+  let geometry = new THREE.CylinderGeometry(4, 4, 2, 64);
+  let materials = [
+    new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.DoubleSide,
+      transparent: true
+    }),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide
+    }),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide
+    })
+  ]
+  let mesh = new THREE.Mesh(geometry, materials)
+
+  scene.add(mesh)
+
+  let s = 0;
+  let p = 1;
+  function animate() {
+	// 一定要在此函数中调用
+    s += 0.01;
+    p -= 0.005;
+    if (s > 2) {
+      s = 0;
+      p = 1;
+    }
+    mesh.scale.set(1 + s, 1, 1 + s);
+    mesh.material[0].opacity = p;
+    
+    requestAnimationFrame(animate)
+  }
+
+  animate()
+
+    
+  </script>
+</body>
+
+</html>

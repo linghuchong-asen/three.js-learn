@@ -48,9 +48,9 @@
     const boxMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(87 / 255, 96 / 255, 111 / 255) });
     const box = new THREE.Mesh(boxGeometry, boxMaterial)
     scene.add(box)
-    /* 当使用rgb格式的参数，传入的是0-255的值返回的也是0-255的值，传入的是0-1的值返回的也是0-1的值，但是使用的时候要传入一个0-1的值，不然不能正常显示颜色 */
+    /* 当使用rgb格式的参数，传入的是0-255的值是以rgb()开头的字符串格式，传入的是0-1的值可以直接传入三个数值 */
     console.log(new THREE.Color(87 / 255, 96 / 255, 111 / 255)); // {r:0.435,g:0.3764,b:0.3411}
-    console.log(new THREE.Color(87, 96, 111));  // {r:87,g:96,b:111}
+    console.log(new THREE.Color('rgb(87, 96, 111)'));  // {r:87,g:96,b:111}
   </script>
 
 </body>
