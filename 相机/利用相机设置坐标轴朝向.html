@@ -3,7 +3,7 @@
  * @Author: yangsen
  * @Date: 2023-02-20 16:03:59
  * @LastEditors: yangsen
- * @LastEditTime: 2023-03-06 16:26:36
+ * @LastEditTime: 2023-03-10 17:22:33
 -->
 <!DOCTYPE html>
 <html lang="zh-cn">
@@ -29,25 +29,18 @@
     function init() {
       container = document.createElement('div');
       document.body.appendChild(container);
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
-      camera.position.set(0, 0, 100);
-      // camera.lookAt(new THREE.Vector3(0,0,0))
-      /* NOTE:相机可以通过旋转设置，但是旋转设置的优先级低于lookAt方法，所以使用旋转的时候就不要设置lookAt，也不要用controls控制器，控制器会调用lookAt方法看向target */
-      const pitch = Math.PI / 10; // 俯仰角,绕x轴
-      const heading = 0; // 偏航角，绕y轴
-      const roll = 0; // 翻滚角，绕z轴
-      const euler = new THREE.Euler(pitch, heading, roll, "XYZ");
-      camera.rotation.copy(euler) // 这种方式可以传一个欧拉角
-      // camera.rotation.set(pitch,heading,roll) // set方法可以直接传弧度制角度
-      console.log(camera.rotation); // 获取相机当前旋转角度
       scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
+      /* NOTE:相机位置在Y轴的负半轴侧，就能控制相机的Y轴是朝屏幕内的 */
+      camera.position.set(10, -100, 100);
+      /* 通过设置相机的up属性改变相机朝向 */
+      // console.log(camera.up); // 默认是(0,1,0)
+      camera.up.set(0, 0, 1);
       const light = new THREE.DirectionalLight(0xffffff, 5);
       light.position.set(100, 100, 100);
       scene.add(light);
       const axes = new THREE.AxesHelper(100);
       scene.add(axes);
-      console.log(camera.matrixWorld); // 相机的世界矩阵，包含平移旋转缩放信息，但不是视图矩阵
-      console.log(camera.up); // Vector3
 
       //renderer
       renderer = new THREE.WebGLRenderer();
@@ -56,12 +49,11 @@
       renderer.setClearColor("#ced6e0")
       container.appendChild(renderer.domElement);
 
-      // 使用相机旋转的情况下不能使用控制器，控制器会调用相机的lookAt方法
-      /* const controls = new OrbitControls(camera, renderer.domElement);
-      console.log(controls.target); // target默认位置原点(0,0,0)
+
+      const controls = new OrbitControls(camera, renderer.domElement);
       controls.addEventListener('change', () => {
         render();
-      }); */
+      });
       const render = () => {
         renderer.render(scene, camera);
         requestAnimationFrame(render)
@@ -76,6 +68,7 @@
     console.log(boxMaterial);
     const box = new THREE.Mesh(boxGeometry, boxMaterial);
     scene.add(box);
+    box.position.set(0, 10, 0)
 
   </script>
 </body>
