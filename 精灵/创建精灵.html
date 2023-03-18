@@ -14,20 +14,23 @@
   <script type="module">
     import * as THREE from "../three/build/three.module.js";
     import { OrbitControls } from "../three/examples/jsm/controls/OrbitControls.js";
+    import { EffectComposer } from '../three/examples/jsm/postprocessing/EffectComposer.js';
+    import { RenderPass } from '../three/examples/jsm/postprocessing/RenderPass.js';
 
-    let scene, renderer, camera;
+    let scene, renderer, camera, composer, renderPass
 
     // 创建精灵函数
     const spriteFun = () => {
-      const map = new THREE.TextureLoader().load("sprite.png");
+      const map = new THREE.TextureLoader().load("1.png");
       console.log(map);
       // SpriteMaterial是支持旋转的
-      const material = new THREE.SpriteMaterial({ map: map,rotation:Math.PI/2 });
-
+      const material = new THREE.SpriteMaterial({ map, rotation: Math.PI / 2 });
+      material.sizeAttenuation = false;
+      console.log(material.transparent, material.opacity, material.alphaTest, material.color); // true 1 0 {r: 1, g: 1, b: 1}
       const sprite = new THREE.Sprite(material);
       /* 参考立方体看的话，精灵的默认的宽高也是1 */
       sprite.position.set(0, 0, 1);
-      sprite.scale.set(10,10,10); // 精灵支持缩放，会拉伸贴图
+      // sprite.scale.set(10, 10, 10); // 精灵支持缩放，会拉伸贴图
       // sprite.rotateX(Math.PI/2) // Sprite设置旋转没有效果，因为就是一个点。
       return sprite;
     };
@@ -48,6 +51,9 @@
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setClearColor(new THREE.Color(0x08c924), 1);
+      composer = new EffectComposer(renderer); // 初始化效果组合器,后期处理
+
+
       // 相机
       camera = new THREE.PerspectiveCamera(
         45,
@@ -56,6 +62,9 @@
         10000
       );
       camera.position.set(70, 70, 70);
+      // 添加基本的渲染通道
+      renderPass = new RenderPass(scene, camera);
+      composer.addPass(renderPass);
       // 灯光
       const light = new THREE.DirectionalLight(0xffffff, 1);
       light.position.set(100, 100, 100);
@@ -68,7 +77,11 @@
       scene.add(spriteFun());
       // 添加立方体
       scene.add(cubeFun());
-      renderer.render(scene, camera);
+      const render = () => {
+        renderer.render(scene, camera);
+        requestAnimationFrame(render)
+      }
+      render()
 
       // 渲染到页面
       document

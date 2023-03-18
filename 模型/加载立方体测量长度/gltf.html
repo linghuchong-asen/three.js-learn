@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>three.js加载glTF模型</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="position">
+    <p>
+      <span>X:</span>
+      <span id="X"></span>
+    </p>
+    <p>
+      <span>Y:</span>
+      <span id="Y"></span>
+    </p>
+    <p>
+      <span>Z:</span>
+      <span id="Z"></span>
+    </p>
+  </div>
+  <script type="module">
+    import * as THREE from "./three.js/build/three.module.js";
+    import { OrbitControls } from "./three.js/examples/jsm/controls/OrbitControls.js";
+    import { GLTFLoader } from "./three.js/examples/jsm/loaders/GLTFLoader.js";
+    let camera, scene, renderer, model, position;
+
+    init();
+    render();
+
+    function init() {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.2,
+        500
+      );
+      camera.position.set(3, 3, 3);
+      scene = new THREE.Scene();
+      // 添加光源
+      const pointLight = new THREE.PointLight(0xecd452, 10);
+      pointLight.position.set(10, 10, 10);
+      scene.add(pointLight);
+      const axesHelper = new THREE.AxesHelper(20);
+      scene.add(axesHelper);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xb1d5c8, 1);
+      container.appendChild(renderer.domElement);
+      render();
+      const loader = new GLTFLoader();
+      loader.load(
+        "./Sponza/Sponza.gltf",
+        function (gltf) {
+          gltf.name = "model";
+          scene.add(gltf.scene);
+          render();
+
+          model = gltf.scene;
+        },
+        function (param) {
+          console.log(param);
+        },
+        function (error) {
+          console.log(error);
+        }
+      );
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.addEventListener("change", render);
+      // controls.minDistance = 2;
+      // controls.maxDistance = 10;
+      // controls.target.set(0, 0, 0);
+      // controls.update();
+    }
+
+    function render() {
+      requestAnimationFrame(render);
+      renderer.render(scene, camera);
+    }
+
+
+
+  </script>
+</body>
+
+</html>
