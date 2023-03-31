@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>setFromPoints</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+
+<body>
+  <script type="module">
+    import * as THREE from '../../three/build/three.module.js';
+    import { OrbitControls } from '../../three/examples/jsm/controls/OrbitControls.js';
+
+    let container;
+    let camera, scene, renderer;
+    init();
+
+    function init() {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
+      camera.position.set(50, 50, 50)
+      scene = new THREE.Scene();
+      const axes = new THREE.AxesHelper(10)
+      scene.add(axes)
+
+      //renderer
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xf1f2f6)
+      container.appendChild(renderer.domElement);
+      // 循环渲染
+      const render = () => {
+        renderer.render(scene, camera)
+        requestAnimationFrame(render)
+      }
+      render()
+
+      //controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.addEventListener('change', () => {
+        renderer.render(scene, camera);
+      });
+    }
+    
+    const geometry = new THREE.BufferGeometry();
+
+    // 创建一个THREE.Vector3数组，用于存储多边形的顶点坐标
+    const points = [];
+    points.push(new THREE.Vector3(5, 5, 5)); // 索引1
+    points.push(new THREE.Vector3(5, 5, -5)); // 2
+    points.push(new THREE.Vector3(-5,5,-5)); // 3
+
+    points.push(new THREE.Vector3(5, 5, 5)); // 1
+    points.push(new THREE.Vector3(-5,5,-5)); // 3
+    points.push(new THREE.Vector3(-5,5,5)); // 4
+
+    // points.push(new THREE.Vector3(5,-5,5));
+    // points.push(new THREE.Vector3(5,-5,-5));
+    // points.push(new THREE.Vector3(-5,-5,-5));
+    // points.push(new THREE.Vector3(-5,-5,5));
+
+    // 将数组作为参数传入ExtrudeBufferGeometry对象的setFromPoints方法中，以生成三维物体
+    geometry.setFromPoints(points);
+    const material = new THREE.MeshBasicMaterial({ color: new THREE.Color(87 / 255, 96 / 255, 111 / 255) });
+    // 将生成的物体添加到场景中
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+   
+  </script>
+
+</body>
+
+</html>

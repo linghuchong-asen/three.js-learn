@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-  <title>基础立方体</title>
+  <title>倾斜面沿法线拉伸</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 </head>
@@ -13,14 +13,14 @@
     import { OrbitControls } from '../three/examples/jsm/controls/OrbitControls.js';
 
     let container;
-    let camera, scene, renderer, controls;
+    let camera, scene, renderer;
     init();
 
     function init() {
       container = document.createElement('div');
       document.body.appendChild(container);
       camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
-      // camera.position.set(50, 50, 50)
+      camera.position.set(50, 50, 50)
       scene = new THREE.Scene();
       const axes = new THREE.AxesHelper(10)
       scene.add(axes)
@@ -39,27 +39,34 @@
       render()
 
       //controls
-      controls = new OrbitControls(camera, renderer.domElement);
+      const controls = new OrbitControls(camera, renderer.domElement);
       controls.addEventListener('change', () => {
         renderer.render(scene, camera);
       });
-    };
-    const boxGeometry = new THREE.BoxGeometry(10, 10, 10);
-    const boxMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(87 / 255, 96 / 255, 111 / 255) });
-    const box = new THREE.Mesh(boxGeometry, boxMaterial);
-    box.applyMatrix4(new THREE.Matrix4().set(
-      // 使用set方法构建矩阵是是行优先，如下所示最后一列表示的是平移；webgl中矩阵是列优先储存，前四个就是第一列不是第一行，最后一行成了表示平移
-      1.0, 0.0, 0.0, 20.0,
-      0.0, 1.0, 0.0, 0.0,
-      0.0, 0.0, 1.0, 0.0,
-      0.0, 0.0, 0.0, 1.0
-    ));
-    console.log(box.position); //  使用矩阵对物体操作，position的值也会自动更新
-    camera.position.set(box.position.x + 20, box.position.y + 20, box.position.z + 20)
-    camera.lookAt(box.position.x, box.position.y, box.position.z);
-    controls.target.set(box.position.x, box.position.y, box.position.z);
-    scene.add(box);
+    }
+    
+    const geometry = new THREE.PlaneGeometry(10, 10);
+    console.log(geometry);
 
+    geometry.rotateX(-Math.PI / 2); // 旋转使其法线与z轴平行
+    geometry.rotateZ(Math.PI / 4); // 倾斜角度为45度
+
+    const face = geometry.faces[0]; // 获取第一个三角形面
+    const vertex = geometry.vertices[face.a]; // 获取面的一个顶点
+    const normal = new THREE.Vector3().copy(face.normal); // 获取面的法向量
+
+    const distance = 5; // 要拉伸的距离
+    geometry.vertices.forEach(vertex => {
+      vertex.add(normal.clone().multiplyScalar(distance));
+    });
+    geometry.verticesNeedUpdate = true; // 标记顶点已更新
+
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh); // 将网格对象添加到场景中
+
+
+   
   </script>
 
 </body>
