@@ -6,54 +6,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
-  <style></style>
+  <style>
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    #father {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+    }
+
+    #leftBox {
+      width: 50%;
+      height: 100%;
+    }
+
+    #rightBox {
+      width: 50%;
+      height: 100%;
+    }
+  </style>
 </head>
 
 <body>
+  <div id="father">
+    <div id="leftBox"></div>
+    <div id="rightBox"></div>
+  </div>
+
   <script type="module">
     import * as THREE from "../../three/build/three.module.js";
     import { OrbitControls } from "../../three/examples/jsm/controls/OrbitControls.js";
     let SCREEN_WIDTH = window.innerWidth;
     let SCREEN_HEIGHT = window.innerHeight;
-    // 场景切换
-    const changeDrawing = {};
+    let aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
 
-    const scene1 = new THREE.Scene();
-    scene1.background = new THREE.Color(0xe17579);
-    const scene2 = new THREE.Scene();
-    scene2.background = new THREE.Color(0x65c2be);
 
-    const camera1 = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    camera1.position.z = 5;
-    camera1.position.x = 5;
-    const camera2 = new THREE.OrthographicCamera(
-      SCREEN_WIDTH / -2,
-      SCREEN_WIDTH / 2,
-      SCREEN_HEIGHT / 2,
-      SCREEN_HEIGHT / -2,
-      1,
-      1000
-    );
-    camera2.position.z = 2;
-    scene1.add(camera1);
-    scene2.add(camera2);
+    const frustumSize = 600;
 
+    const scene = new THREE.Scene();
+    const camera3D = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera3D.position.z = 5;
+    camera3D.position.x = 5;
+    const camera2D = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera2D.position.z = 5;
+    scene.add(camera2D);
+    scene.add(camera3D);
+    console.log(camera2D.layers.mask);
+    camera3D.layers.set(2);
+    // camera3D.layers.enable(0);
+    console.log(camera3D.layers.mask);
+
+
+    /** 绿色的物体只在3D相机下显示 */
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
-    const geometry2 = new THREE.PlaneGeometry(200, 100); // 宽度和高度
-    const material2 = new THREE.MeshBasicMaterial({
-      color: 0x00ffff, // 青色
-      side: THREE.DoubleSide,
-    });
-    const plane = new THREE.Mesh(geometry2, material2);
-    scene1.add(cube);
-    scene2.add(plane);
+    cube.position.x = 15;
+    cube.layers.set(2);
+    cube.layers.enable(0);
+    scene.add(cube);
+
+    const geometry2 = new THREE.BoxGeometry(1, 1, 1);
+    const material2 = new THREE.MeshBasicMaterial({ color: 0xd49494 });
+    const cube2 = new THREE.Mesh(geometry2, material2);
+    scene.add(cube2);
+    console.log(cube2.layers.mask);
+
+    const geometry3 = new THREE.BoxGeometry(1, 1, 1);
+    const material3 = new THREE.MeshBasicMaterial({ color: 0x945433 });
+    const cube3 = new THREE.Mesh(geometry3, material3);
+    cube3.position.x = 5;
+    scene.add(cube3);
+
+
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -62,78 +94,37 @@
 
     // 坐标轴辅助对象
     const axesHelper = new THREE.AxesHelper(5);
-    const axesHelperClone = axesHelper.clone();
-    scene1.add(axesHelper);
-    scene2.add(axesHelperClone);
+    axesHelper.layers.enable(2)
+    scene.add(axesHelper);
 
     function animate() {
       requestAnimationFrame(animate);
+      // renderer.clear();
+      renderer.setViewport(0, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
+      renderer.setScissor(0, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
+      renderer.setScissorTest(true)
+      renderer.render(scene, camera3D);
 
-      renderer.setViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-      renderer.setScissor(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-      renderer.setScissorTest(true);
-      renderer.render(scene2, camera2);
 
-      const smallSize = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) / 3;
-      renderer.setViewport(
-        SCREEN_WIDTH - smallSize,
-        SCREEN_HEIGHT - smallSize,
-        smallSize,
-        smallSize
-      );
-      renderer.setScissor(
-        SCREEN_WIDTH - smallSize,
-        SCREEN_HEIGHT - smallSize,
-        smallSize,
-        smallSize
-      );
-      camera2.aspect = 1;
-      renderer.render(scene1, camera1);
+      renderer.setViewport(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
+      renderer.setScissor(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT)
+      renderer.render(scene, camera2D);
     }
     animate();
 
     // 轨道控制器
-    const leftBox = document.getElementById("fullBox");
-    const rightBox = document.getElementById("rightTopBox");
-    const orbitControls = new OrbitControls(camera1, leftBox);
-    orbitControls.addEventListener("change", () => {
-      orbitControls.target = cube.position;
-      renderer.render(scene1, camera1);
-    });
-    // const orbitControls2 = new OrbitControls(camera2, rightBox)
+    const leftBox = document.getElementById('leftBox')
+    const rightBox = document.getElementById('rightBox')
+    const orbitControls = new OrbitControls(camera3D, leftBox)
+    orbitControls.addEventListener('change', () => {
+      orbitControls.target = cube.position
+      renderer.render(scene, camera3D)
+    })
+    // const orbitControls2 = new OrbitControls(camera2D, rightBox)
     // orbitControls2.addEventListener('change', () => {
-    //   orbitControls2.target = cube.position
-    //    renderer.render(scene2, camera2)
+    //   orbitControls2.target = cube2.position
+    //   renderer.render(scene, camera2D)
     // })
-
-    // 鼠标拖动画布
-    let isDragging = false;
-    const orthographicCameraPosition = {
-      x: 0,
-      y: 0,
-    };
-    rightBox.addEventListener("mousedown", function (e) {
-      isDragging = true;
-      orthographicCameraPosition.x = e.clientX;
-      orthographicCameraPosition.y = e.clientY;
-    });
-    rightBox.addEventListener("mousemove", function (e) {
-      if (isDragging) {
-        const deltaMove = {
-          x: e.clientX - orthographicCameraPosition.x,
-          y: e.clientY - orthographicCameraPosition.y,
-        };
-        console.log(deltaMove);
-        camera2.position.x += deltaMove.x * 0.8;
-        camera2.position.y += deltaMove.y * 0.8;
-        camera2.updateProjectionMatrix();
-        orthographicCameraPosition.x = e.clientX;
-        orthographicCameraPosition.y = e.clientY;
-      }
-    });
-    rightBox.addEventListener("mouseup", function () {
-      isDragging = false;
-    });
 
 
   </script>
